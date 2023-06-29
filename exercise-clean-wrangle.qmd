@@ -1,0 +1,93 @@
+---
+title: "Exercise: Explore, Clean, and Wrangle Data"
+author: "Webb"
+format: html
+editor: visual
+---
+
+## About the data
+# Package ID: knb-lter-sbc.77.8 Cataloging System:https://pasta.edirepository.org.
+# Data set title: SBC LTER: Reef: Abundance, size and fishing effort for California Spiny Lobster (Panulirus interruptus), ongoing since 2012.
+# Data set creator:    - Santa Barbara Coastal LTER
+# Data set creator:  Daniel C Reed & Robert J Miller -  
+
+```{r}
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-sbc/77/8/f32823fba432f58f66c06b589b7efac6" 
+infile1 <- tempfile()
+try(download.file(inUrl1,infile1,method="curl"))
+if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
+```
+
+
+
+## Setup 
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+# Read in data and explore data 
+
+```{r}
+# Read in data
+lobster_abundance <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-sbc.77.8&entityid=f32823fba432f58f66c06b589b7efac6")
+
+lobster_traps <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-sbc.77.8&entityid=66dd61c75bda17c23a3bce458c56ed84")
+
+head(lobster_abundance)
+```
+```{r}
+head(lobster_abundance)
+```
+
+## Exercise 1 Convert missing values using mutate() and na_if()
+
+```{r}
+lobster_abundance <- lobster_abundance %>% 
+    mutate(SIZE_MM = na_if(SIZE_MM, -99999))
+head(lobster_abundance)
+```
+
+## Exercise 2 filter() practice
+```{r}
+aque_70mm <- lobster_abundance %>% 
+    filter(SITE == "AQUE" & SIZE_MM >= 70)
+head(lobster_abundance)
+```
+
+## Exercise 3 Create a subset (vector) with the traps’ information at all sites where abundance data is not NA.*** REVIEW***
+```{r}
+## Create a vector with unique sites in lobster_abundance
+abundance_sites <- unique(lobster_abundance$SITE)
+head(abundance_sites)
+
+## Filter sites in vector above
+traps_subset <- lobster_traps %>% 
+    filter(SITE %in% abundance_sites)
+head(traps_subset)
+```
+
+
+## Exercise 4 Calculate totals by site and year
+```{r}
+total_abundance <- lobster_abundance %>% 
+    group_by(SITE, YEAR) %>% 
+    summarize(total_lobsters = sum(COUNT, na.rm = T))
+
+
+total_traps <- traps_subset %>% 
+    group_by(SITE, YEAR) %>% 
+    summarize(total_traps = sum(TRAPS, na.rm = T))
+```
+
+
+## Exercise 5 Joining two data frames total_abundance and total_traps
+
+```{r}
+head(total_abundance)
+head(total_traps)
+```
+
+
+## Exercise 6 ## Adding a new column
